@@ -14,9 +14,9 @@ const Item = require("./../models/Item");
 const Repair = require("./../models/Repair");
 const User = require("./../models/User");
 const _ = require("underscore");
-const config = require("../config")();
+const config = require("../config");
 const ItemController = require("./ItemController");
-const mailer = require("./../email");
+const getMailer = require("./../email");
 
 router.use(bodyParser.json());
 router.use(authMiddleware);
@@ -399,6 +399,7 @@ router.put('/:id/mark_paid', async (req,res) => {
     if (!transaction.complete) return res.status(400).send("Cannot checkout an incomplete transaction");
     if (req.body.is_paid && !transaction.is_paid) {
       // Send receipt email
+      let mailer = await getMailer()
       await mailer.send({
         message: {
           to: transaction.customer.email,
@@ -761,6 +762,7 @@ router.get("/:id/email-notify", async (req, res) => {
   try {
     let transaction = await Transaction.findById(req.params.id);
     if (!transaction) return res.status(404);
+    let mailer = await getMailer();
     await mailer.send({
       message: {
         to: transaction.customer.email,
@@ -782,6 +784,7 @@ router.get("/:id/email-receipt", async (req, res) => {
   try {
     let transaction = await Transaction.findById(req.params.id);
     if (!transaction) return res.status(404);
+    let mailer = await getMailer()
     await mailer.send({
       message: {
         to: transaction.customer.email,
